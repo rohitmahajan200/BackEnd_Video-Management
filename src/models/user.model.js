@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 const userSchema=new mongoose.Schema({
-    username:{
+    userName:{
         type:String,
         required:true,
         unique:true,
@@ -17,19 +17,19 @@ const userSchema=new mongoose.Schema({
         lowecase:true,
         trim:true
     },
-    fullname:{
+    fullName:{
         type:String,
         required:true,
         trim:true,
     },
-    avtar:{
+    avatar:{
         type:String,
         required:true
     },
-    coverimage:{
+    coverImage:{
         type:String
     },
-    watchhistory:[
+    watchHistory:[
         {
             type:mongoose.Schema.Types.ObjectId,
             ref:"Video"
@@ -39,7 +39,7 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true
     },
-    refreshtoken:{
+    refreshToken:{
         type:String
     }
 },{
@@ -48,7 +48,7 @@ const userSchema=new mongoose.Schema({
 
 userSchema.pre("save",async function(next){
     if(!this.isModified("password"))return next();
-    this.password=bcrypt.hash(this.password,10);
+    this.password=await bcrypt.hash(this.password,10);
     next();
 })
 

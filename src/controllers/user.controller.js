@@ -1,7 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import {ApiError} from '../utils/ApiErrors.js'
 import {User} from "../models/user.model.js"
-import {uploadonCloudinary} from "../utils/cloudinary.js"
+import {deleteImageFromCloudinary, uploadonCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt  from "jsonwebtoken";
 
@@ -192,4 +192,102 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         throw new ApiError(501,error.message || "Somthing went wrong while refreshing the token")
     }
 })
-export {registerUser,loginUser,logoutUser,refreshAccessToken}
+
+const changeCurrentPassword=asyncHandler(async(req,res)=>{
+    const {newPassword,oldPassword}=req.body;
+    const user=await User.findById(req?.user._id)
+    const isPasswordCorrect= await user.isPasswordCorrect(oldPassword);
+
+    if(!isPasswordCorrect){
+        throw new ApiError(401,"Password Not Matched")
+    }
+    user.password=newPassword
+    await user.save({validateBeforeSave:false})
+
+    res
+    .status(200)
+    .json(new ApiResponse(200,{},"Password is chnaged successfully.."))
+})
+
+const getCurrentUser=asyncHandler(async(req,res)=>{
+    return res
+    .status(200)
+    .json(new ApiResponse(200,req.user,"Current user fetched"))
+})
+
+const updateAccoutDetails=asyncHandler(async(req,res)=>{
+    const{fullName,email}=req.body;
+    if(!fullName || !email){
+        throw new ApiError(400,"All fields are required")
+    }
+    const user=await User.findByIdAndUpdate(req?.user._id,
+    {
+        $set:{
+            fullName,
+            email
+        }
+    },
+    {
+        new:true
+    }).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,user,"Accont details updated successfully"))
+
+})
+
+const updateUserAvatar=asyncHandler(async(req,res)=>{
+    const avatarLocalPath=req.file?.path;
+    if(!avatarLocalPath){
+        throw new ApiError(400,"Avatar file is missing")
+    }
+
+    const newAvatar= await uploadonCloudinary(avatarLocalPath)
+        if(!newAvatar.url){
+        throw new ApiError(500,"Somthing went wrong while uploading avatar")
+    }
+    const userToRemoveExistingImage=await User.findById(req.user_id);
+    await deleteImageFromCloudinary(userToRemoveExistingImage.avatar)
+    const user=await User.findByIdAndUpdate(req.user._id,
+        {
+            $set:{avatar:newAvatar.url}
+        },
+        {new:true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"Avatar has been updated"))
+})
+
+const updateUserCoverImage=asyncHandler(async(req,res)=>{
+    const coverImageLocalPath=req.file?.path;
+    if(!coverImageLocalPath){
+        throw new ApiError(400,"Avatar file is missing")
+    }
+
+    const newcoverImageLocalPath= await uploadonCloudinary(coverImageLocalPath)
+
+        if(!newcoverImageLocalPath.url){
+        throw new ApiError(500,"Somthing went wrong while uploading cover image")
+    }
+
+    const userToRemoveExistingImage=await User.findById(req.user_id);
+    await deleteImageFromCloudinary(userToRemoveExistingImage.coverImage)
+
+    const user=await User.findByIdAndUpdate(req.user._id,
+        {
+            $set:{coverImage:newcoverImageLocalPath.url}
+        },
+        {new:true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"Cover image has been updated"))
+})
+
+export
+ {registerUser,loginUser,logoutUser,refreshAccessToken,
+    getCurrentUser,changeCurrentPassword,updateAccoutDetails,updateUserAvatar,updateUserCoverImage}

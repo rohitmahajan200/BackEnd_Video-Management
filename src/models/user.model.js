@@ -70,7 +70,7 @@ userSchema.methods.genrateAccessToken=function(){
         }
     )
 }
-userSchema.methods.genrateRefreshToken=async function(){
+userSchema.methods.genrateRefreshToken=function(){
          return jwt.sign(
         {
             _id:this._id,

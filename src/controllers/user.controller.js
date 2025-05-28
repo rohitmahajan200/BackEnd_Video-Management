@@ -9,6 +9,9 @@ const genrateAccessAndRefreshToken=async(userId)=>{
         const user=await User.findById(userId);
         const accessToken= user.genrateAccessToken();
         const refreshToken= user.genrateRefreshToken();
+        console.log("access token ",accessToken);
+        console.log("refresh token ",refreshToken);
+        
 
         user.refreshToken=refreshToken;
         await user.save({validateBeforeSave:false})
@@ -84,7 +87,7 @@ const registerUser=asyncHandler(async(req,res)=>{
 });
 
 const loginUser=asyncHandler(async(req,res)=>{
-    //extract data from body
+    //extract data from body    
     const {userName,email,password}=req.body;
 
     //check email/username & password is not empty
@@ -129,7 +132,31 @@ const loginUser=asyncHandler(async(req,res)=>{
             refreshToken
         },
         "User LoggedIn Successfully"))
+});
+
+const logoutUser=asyncHandler(async(req,res)=>{
+   await User.findByIdAndUpdate(
+    req.user._id,
+    {
+        $set:{
+            refreshToken:undefined
+        }
+    },
+    {
+        new:true
+    })
+
+    const options={
+        httpOnly:true,
+        secure:true,
+    }
+
+    res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(new ApiResponse(200,{},"User Logged Out"))
+    
 })
 
-
-export {registerUser,loginUser}
+export {registerUser,loginUser,logoutUser}

@@ -238,9 +238,7 @@ const updateAccoutDetails=asyncHandler(async(req,res)=>{
 
 })
 
-const updateUserAvatar=asyncHandler(async(req,res)=>{
-    console.log(req.file);
-    
+const updateUserAvatar=asyncHandler(async(req,res)=>{    
     const avatarLocalPath=req.file?.path;
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is missing")
@@ -414,6 +412,7 @@ const getWatchHistory=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200,user[0].watchHistory,"Watch History Fetched"))
 })
+
 
 export
  {registerUser,loginUser,logoutUser,refreshAccessToken,

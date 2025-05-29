@@ -248,8 +248,29 @@ const updateUserAvatar=asyncHandler(async(req,res)=>{
         if(!newAvatar.url){
         throw new ApiError(500,"Somthing went wrong while uploading avatar")
     }
-    const userToRemoveExistingImage=await User.findById(req.user_id);
-    await deleteImageFromCloudinary(userToRemoveExistingImage.avatar)
+    const userToRemoveExistingImage=await User.findById(req.user._id);
+    
+    ////////////////////////////////////////////////////////////////////////
+    //  to extract Public Id fro ClodinaryURL to delete it from cloudinary
+    const getPublicIdFromUrl = (url) => {
+    try {
+    const urlParts = url.split('/');
+    const fileWithExtension = urlParts[urlParts.length - 1]; // e.g. "photo.jpg"
+    const folder = urlParts[urlParts.length - 2]; // e.g. "user-uploads"
+    const fileName = fileWithExtension.replace(/\.[^/.]+$/, ""); // remove extension
+
+    //return `${folder}/${fileName}`; // e.g. "user-uploads/photo"
+    return fileName;
+    } catch (error) {
+    console.error("Invalid Cloudinary URL", error);
+    return null;
+    }
+    };
+    ////////////////////////////////////////////////////////////////////
+
+    const publicID=getPublicIdFromUrl(userToRemoveExistingImage.avatar)
+    
+    await deleteImageFromCloudinary(publicID)
     const user=await User.findByIdAndUpdate(req.user._id,
         {
             $set:{avatar:newAvatar.url}

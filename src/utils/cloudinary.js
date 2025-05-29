@@ -14,6 +14,8 @@ const uploadonCloudinary = async (localFilePath) => {
     resource_type: "auto",
   });
   fs.unlinkSync(localFilePath); //remove the locally saved temp file
+  console.log("uploadResult====>",uploadResult);
+  
   return uploadResult;
   } 
   catch(error) {
@@ -25,6 +27,8 @@ const uploadonCloudinary = async (localFilePath) => {
 };
 
 const deleteImageFromCloudinary=async(filePath)=>{
+  console.log("file path=> ",filePath);
+  
 await cloudinary.uploader.destroy(filePath)
 };
 

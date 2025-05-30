@@ -1,7 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import {ApiError} from '../utils/ApiErrors.js'
 import {User} from "../models/user.model.js"
-import {deleteImageFromCloudinary, uploadonCloudinary} from "../utils/cloudinary.js"
+import {deleteImageFromCloudinary, getPublicIdFromUrl, uploadonCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt  from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -55,7 +55,7 @@ const registerUser=asyncHandler(async(req,res)=>{
     if(!avatar){
         throw new ApiError(400,"Avatar is mandatory")
     }
-
+    
     const user=await User.create({
         userName:userName?.toLowerCase()?.trim(),
         email:email?.toLowerCase()?.trim(),
@@ -64,6 +64,8 @@ const registerUser=asyncHandler(async(req,res)=>{
         coverImage:coverImage?.url || "",
         password
     })
+
+    console.log("username is ",user);
 
     const createdUser=await User.findById(user._id).select(
         "-password -refreshtoken"
@@ -92,6 +94,7 @@ const loginUser=asyncHandler(async(req,res)=>{
     const user=await User.findOne({
         $or:[{userName},{email}]
     })
+    
     if(!user){
         throw new ApiError(400,"User does not exist")
     }
@@ -232,7 +235,7 @@ const updateAccoutDetails=asyncHandler(async(req,res)=>{
 
 })
 
-const updateUserAvatar=asyncHandler(async(req,res)=>{
+const updateUserAvatar=asyncHandler(async(req,res)=>{    
     const avatarLocalPath=req.file?.path;
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is missing")
@@ -242,8 +245,11 @@ const updateUserAvatar=asyncHandler(async(req,res)=>{
         if(!newAvatar.url){
         throw new ApiError(500,"Somthing went wrong while uploading avatar")
     }
-    const userToRemoveExistingImage=await User.findById(req.user_id);
-    await deleteImageFromCloudinary(userToRemoveExistingImage.avatar)
+    const userToRemoveExistingImage=await User.findById(req.user._id);
+    
+    const publicID=getPublicIdFromUrl(userToRemoveExistingImage.avatar)
+    await deleteImageFromCloudinary(publicID)
+
     const user=await User.findByIdAndUpdate(req.user._id,
         {
             $set:{avatar:newAvatar.url}
@@ -253,13 +259,14 @@ const updateUserAvatar=asyncHandler(async(req,res)=>{
 
     return res
     .status(200)
-    .json(new ApiResponse(200,{},"Avatar has been updated"))
-})
+    .json(new ApiResponse(200,user,"Avatar has been updated"))
+})  
 
 const updateUserCoverImage=asyncHandler(async(req,res)=>{
+    
     const coverImageLocalPath=req.file?.path;
     if(!coverImageLocalPath){
-        throw new ApiError(400,"Avatar file is missing")
+        throw new ApiError(400,"Cover image file is missing")
     }
 
     const newcoverImageLocalPath= await uploadonCloudinary(coverImageLocalPath)
@@ -268,9 +275,13 @@ const updateUserCoverImage=asyncHandler(async(req,res)=>{
         throw new ApiError(500,"Somthing went wrong while uploading cover image")
     }
 
-    const userToRemoveExistingImage=await User.findById(req.user_id);
-    await deleteImageFromCloudinary(userToRemoveExistingImage.coverImage)
+    const userToRemoveExistingImage=await User.findById(req.user._id);
 
+    if(userToRemoveExistingImage.coverImage){
+    const publicID= await getPublicIdFromUrl(userToRemoveExistingImage.coverImage)    
+    await deleteImageFromCloudinary(publicID)
+    }
+  
     const user=await User.findByIdAndUpdate(req.user._id,
         {
             $set:{coverImage:newcoverImageLocalPath.url}
@@ -280,7 +291,7 @@ const updateUserCoverImage=asyncHandler(async(req,res)=>{
 
     return res
     .status(200)
-    .json(new ApiResponse(200,{},"Cover image has been updated"))
+    .json(new ApiResponse(200,user,"Cover image has been updated"))
 })
 
 const getUserChannelProfile=asyncHandler(async(req,res)=>{
@@ -398,6 +409,7 @@ const getWatchHistory=asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200,user[0].watchHistory,"Watch History Fetched"))
 })
+
 
 export
  {registerUser,loginUser,logoutUser,refreshAccessToken,

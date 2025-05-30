@@ -22,10 +22,10 @@ const genrateAccessAndRefreshToken=async(userId)=>{
 }
 
 const registerUser=asyncHandler(async(req,res)=>{
-   
+
     const {fullName,email,password,userName}=req.body;
-    
-    if([fullName,email,password,userName].some((field)=>field.trim()==="")){
+
+    if([fullName,email,password,userName].some((field)=>!field || field.trim()==="")){
         throw new ApiError(400,"All fileds are required")
     }
 
@@ -38,7 +38,7 @@ const registerUser=asyncHandler(async(req,res)=>{
     }
 
     const avtarLocalPath=req.files?.avatar[0]?.path;
-    
+
     //const coverLocalPath=req.files?.coverImage[0]?.path;
     let coverLocalPath;
     if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
@@ -51,18 +51,18 @@ const registerUser=asyncHandler(async(req,res)=>{
 
     const avatar=await uploadonCloudinary(avtarLocalPath);
     const coverImage=await uploadonCloudinary(coverLocalPath);
-    
+
     if(!avatar){
         throw new ApiError(400,"Avatar is mandatory")
     }
 
     const user=await User.create({
+        userName:userName?.toLowerCase()?.trim(),
+        email:email?.toLowerCase()?.trim(),
         fullName,
         avatar:avatar.url,
         coverImage:coverImage?.url || "",
-        email,
-        password,
-        userName:userName.toLowerCase()
+        password
     })
 
     const createdUser=await User.findById(user._id).select(
@@ -76,12 +76,6 @@ const registerUser=asyncHandler(async(req,res)=>{
     return res.status(201).json(
         new ApiResponse(201,createdUser,"User Regsitered Successfully")
     )
-
-
-
-
-
-
 });
 
 const loginUser=asyncHandler(async(req,res)=>{

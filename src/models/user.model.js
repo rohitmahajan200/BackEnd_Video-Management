@@ -6,7 +6,6 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true,
         unique:true,
-        lowecase:true,
         trim:true,
         index:true
     },
@@ -14,7 +13,6 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true,
         unique:true,
-        lowecase:true,
         trim:true
     },
     fullName:{

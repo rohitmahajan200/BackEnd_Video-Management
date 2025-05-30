@@ -55,7 +55,7 @@ const registerUser=asyncHandler(async(req,res)=>{
     if(!avatar){
         throw new ApiError(400,"Avatar is mandatory")
     }
-
+    
     const user=await User.create({
         fullName,
         avatar:avatar.url,
@@ -64,6 +64,8 @@ const registerUser=asyncHandler(async(req,res)=>{
         password,
         userName:userName.toLowerCase()
     })
+
+    console.log("username is ",user);
 
     const createdUser=await User.findById(user._id).select(
         "-password -refreshtoken"
@@ -98,6 +100,7 @@ const loginUser=asyncHandler(async(req,res)=>{
     const user=await User.findOne({
         $or:[{userName},{email}]
     })
+    
     if(!user){
         throw new ApiError(400,"User does not exist")
     }

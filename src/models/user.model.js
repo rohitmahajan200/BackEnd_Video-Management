@@ -6,15 +6,16 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:true,
         unique:true,
-        lowecase:true,
+        lowercase:true,
         trim:true,
-        index:true
+        index:true,
+        //sparse: true
     },
     email:{
         type:String,
         required:true,
         unique:true,
-        lowecase:true,
+        lowercase:true,
         trim:true
     },
     fullName:{

@@ -59,13 +59,35 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+    if(!videoId){
+        throw new ApiError(400,"video id is mandatory")
+    }
+    const video=await Video.findById(videoId);
+    return res
+    .status(200)
+    .json(new ApiResponse(200,video.videofile,"Video fetched successfully"))
     //TODO: get video by id
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: update video details like title, description, thumbnail
+    const {title, description}=req.body
+    const thumbnailLocalPath=req.file.path;
+    const result=await uploadonCloudinary(thumbnailLocalPath)
+    const video=Video.findByIdAndUpdate(videoId,
+    {
+        title,
+        description,
+        thumbnail:result.url,
+    },
+    {
+        new:true, runValidators:false
+    })
 
+    return res
+    .status(200)
+    .json(new ApiResponse(200,video,"Video has been updated"))
+    //TODO: update video details like title, description, thumbnail
 })
 
 const deleteVideo = asyncHandler(async (req, res) => {

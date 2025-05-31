@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { ApiError } from "./ApiErrors.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_COLUD_NAME,
@@ -9,16 +10,35 @@ cloudinary.config({
 
 const uploadonCloudinary = async (localFilePath) => {
   if (!localFilePath) return null;
+
+  // let uploadResult='';
+  // const result=new Promise((resolve,reject)=>{
+  //   resolve(cloudinary.uploader.upload(localFilePath, {resource_type: "auto",}))
+  // })
+  // .then((data)=>uploadResult=data)
+  // .catch((err)=>{throw new ApiError(500,"Somthing went wrong while uploadinh images")})
+  // .finally(()=>{if (fs.existsSync(localFilePath)) {
+  //   fs.unlinkSync(localFilePath); //remove the locally saved temp file 
+  // }})
+
   try {
     const uploadResult = await cloudinary.uploader.upload(localFilePath, {
     resource_type: "auto",
   });
-  fs.unlinkSync(localFilePath); //remove the locally saved temp file
   
+    setTimeout(()=>{
+    if (fs.existsSync(localFilePath)) {
+    fs.unlinkSync(localFilePath); //remove the locally saved temp file 
+  }
+    },7000)
+  
+
   return uploadResult;
   } 
   catch(error) {
-    fs.unlinkSync(localFilePath); //remove the locally saved temp file
+     if (fs.existsSync(localFilePath)) {
+    fs.unlinkSync(localFilePath); //remove the locally saved temp file 
+  }
     console.log("error while uploading file on cloudinary ", error);
     return null
   }

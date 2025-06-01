@@ -8,20 +8,29 @@ import {uploadonCloudinary} from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType=1, userId } = req.query
+    let { page = 1, limit = 10, query, sortBy, sortType=1, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
+    page=parseInt(page,10)
+    limit=parseInt(limit,10)
+    sortType=parseInt(sortType,10)
+
     const allVideos=await Video.aggregate([
+        {
+            $match:{
+                ispublished:true
+            }
+        },
+        {
+            $sort:{sortBy:sortType}
+        },
         {
             $facet:{
                 metaData:[{$count:'totalCount'}],
                 data:[
                     {$skip:((page-1) *limit)},{$limit:limit}
                 ]
-            },
+            }
             
-        },
-        {
-            $sort:{sortBy:sortType}
         }
         
     ])
@@ -31,7 +40,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
-    const {title, description} = req.body
+    const {title, description,ispublish} = req.body
     // TODO: get video, upload to cloudinary, create video
     
     const videoFile=req.files?.videoFile[0].path;
@@ -47,7 +56,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         description,
         duration:uplaodedVideo.duration,
         views:0,
-        ispublished:true,
+        ispublished:ispublish,
         owner:req.user._id
     })
 
@@ -70,8 +79,8 @@ const getVideoById = asyncHandler(async (req, res) => {
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
-    const {title, description}=req.body
+    const { videoId } = req.params;
+    const {title, description}=req.body;
     const thumbnailLocalPath=req.file.path;
     const result=await uploadonCloudinary(thumbnailLocalPath)
     const video=Video.findByIdAndUpdate(videoId,
@@ -92,12 +101,33 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+    if(!videoId){
+        throw new ApiError(400,"video id is required")
+    }
+    const deletedVideo=await Video.findByIdAndDelete(videoId);
+    if(!deletedVideo){
+         throw new ApiError(500,"Something went wrong while deleting the video")
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{},"video deleted successfully"))
     //TODO: delete video
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
-    const { videoId } = req.params
+    const { videoId } = req.params;
+    const updatedVideo=await Video.findById(videoId);
+
+        updatedVideo.ispublished=!updatedVideo.ispublished
+
+        await updatedVideo.save()
+
+        return res
+        .status(200)
+        .json(new ApiResponse(200,updateVideo,))
 })
+
+
 
 export {
     getAllVideos,

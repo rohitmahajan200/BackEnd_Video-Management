@@ -27,7 +27,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
             $facet:{
                 metaData:[{$count:'totalCount'}],
                 data:[
-                    {$skip:((page-1) *limit)},{$limit:limit}
+                    {
+                        $skip:((page-1) *limit)
+                    },
+                    {
+                        $limit:limit
+                    }
                 ]
             }
             

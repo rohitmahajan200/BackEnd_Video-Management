@@ -57,9 +57,14 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
 const getChannelVideos = asyncHandler(async (req, res) => {
     // TODO: Get all the videos uploaded by the channel
+    let {page,limit}=req.query;
+    page=Number(page)||1;
+    limit=Number(limit)||5;
+    const skip=((page-1)*limit)
     const allVideos=await Video.find({
         owner:req.user._id
-    })
+    }).skip(skip).limit(limit)
+
     if(!allVideos){
         throw new ApiError(400,"No video is uploaded on channel")
     }

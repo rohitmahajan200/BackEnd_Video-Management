@@ -9,8 +9,8 @@ import mongoose from "mongoose";
 const genrateAccessAndRefreshToken=async(userId)=>{
     try {
         const user=await User.findById(userId);
-        const accessToken= user.genrateAccessToken();
-        const refreshToken= user.genrateRefreshToken();
+        const accessToken= await user.genrateAccessToken();
+        const refreshToken= await user.genrateRefreshToken();
         user.refreshToken=refreshToken;
         await user.save({validateBeforeSave:false})
 

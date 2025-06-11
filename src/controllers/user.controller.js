@@ -5,6 +5,7 @@ import {deleteImageFromCloudinary, getPublicIdFromUrl, uploadonCloudinary} from 
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt  from "jsonwebtoken";
 import mongoose from "mongoose";
+import { getIoInstance } from "../socket.js";
 
 const genrateAccessAndRefreshToken=async(userId)=>{
     try {
@@ -111,6 +112,10 @@ const loginUser=asyncHandler(async(req,res)=>{
     const loggedUser=await User.findById(user._id).select("-password -refreshToken")
     //return the user
 
+    //emit the userLogin event
+    const io=getIoInstance();
+    io.emit("userLogin",user._id);
+
     const options={
         httpOnly:true,
         secure:true,
@@ -145,6 +150,8 @@ const logoutUser=asyncHandler(async(req,res)=>{
         httpOnly:true,
         secure:true,
     }
+    const io=getIoInstance();
+    io.emit("disconnect");
 
     res
     .status(200)

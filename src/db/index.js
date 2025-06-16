@@ -8,5 +8,6 @@ export const connetDB=async()=>{
         
     } catch (error) {
         console.log("Error in DB connection=>",error);
+        process.exit(1); 
     }
 }
